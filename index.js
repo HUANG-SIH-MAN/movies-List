@@ -10,6 +10,7 @@ const movies = []  //存放電影資料常數
 const moviePanel = document.querySelector('#movie-panel')  //電影列表
 const searchMovie = document.querySelector('#search-movies') 
 const searchInput = document.querySelector('#search-input') 
+const home = document.querySelector('.home') 
 
 //透過API取得電影資訊
 axios
@@ -84,8 +85,17 @@ searchMovie.addEventListener('submit', function onSearchFormSubmitted(event) {
     for (const movie of movies) {
       if (movie.title.trim().toLowerCase().includes(keyWords)) {
         filteredMovies.push(movie)
+        renderMovieList(filteredMovies)   
       }
     }
   }
-  renderMovieList(filteredMovies)
+  if (filteredMovies.length === 0) {
+    alert(`Can not find ${keyWords} movie`)
+  }
+})
+
+//按下Home返回電影列表
+home.addEventListener('click',() =>{
+  renderMovieList(movies)
+  searchInput.value = ''
 })
