@@ -5,7 +5,11 @@ const POSTER_URL = BASE_URL + '/posters/'
 
 //常數們
 const movies = []  //存放電影資料常數
-const moviePanel = document.querySelector('#movie-panel')  //DOM節點電影列表
+
+//DOM節點
+const moviePanel = document.querySelector('#movie-panel')  //電影列表
+const searchMovie = document.querySelector('#search-movies') 
+const searchInput = document.querySelector('#search-input') 
 
 //透過API取得電影資訊
 axios
@@ -70,3 +74,18 @@ function showMovieModal(ID) {
   .catch((err) => console.log(err))
 
 }
+
+//建立搜尋結果
+searchMovie.addEventListener('submit', function onSearchFormSubmitted(event) {
+  event.preventDefault()  //避免送出表單後網頁從新整理
+  const keyWords = searchInput.value.trim().toLowerCase()  //取得輸入的關鍵字，並去除空白和轉為小寫
+  let filteredMovies = []
+  if (keyWords.length > 0) {
+    for (const movie of movies) {
+      if (movie.title.trim().toLowerCase().includes(keyWords)) {
+        filteredMovies.push(movie)
+      }
+    }
+  }
+  renderMovieList(filteredMovies)
+})
