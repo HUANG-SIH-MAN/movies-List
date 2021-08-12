@@ -78,14 +78,27 @@ searchInput.addEventListener('input', function onSearchFormSubmitted(event) {
   const keyWords = searchInput.value.trim().toLowerCase()  //取得輸入的關鍵字，並去除空白和轉為小寫
   filteredMovies.splice(0, filteredMovies.length)
   if (keyWords.length > 0) {
+    console.log(filteredMovies)
     for (const movie of movies) {
       if (movie.title.trim().toLowerCase().includes(keyWords)) {
         filteredMovies.push(movie)
-        renderMovieList(getMoviesByPage(1, patten), model)
-        renderPaginator(filteredMovies.length)  
       }
     }
   }
+  if (filteredMovies.length > 0) {
+    renderMovieList(getMoviesByPage(1, patten), model)
+    renderPaginator(filteredMovies.length) 
+  } else {
+    moviePanel.innerHTML = `
+      <div class="jumbotron container-fluid">
+        <div class="container">
+          <div><h1 class="display-4 mb-3">搜尋不到電影</h1><div>
+          <div><p class="lead">請嘗試輸入其他關鍵字!!</p></div>
+        </div>
+      </div>
+    `
+  }
+   
 })
 
 //DOM建立搜尋結果(按送出)
@@ -103,7 +116,12 @@ searchMovie.addEventListener('submit', function onSearchFormSubmitted(event) {
     }
   }
   if (filteredMovies.length === 0) {
-    alert(`Can not find ${keyWords} movie`)
+    swal({
+      title: `找不到${keyWords}的電影`,
+      text: '嘗試輸入其他關鍵字吧!!',
+      timer: 2000,
+      showConfirmButton: false
+    });
   }
 })
 
