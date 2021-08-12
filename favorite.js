@@ -2,17 +2,24 @@
 const BASE_URL = 'https://movie-list.alphacamp.io'  //API網站主網址
 const INDEX_URL = BASE_URL + '/api/v1/movies/'   //不同API版本
 const POSTER_URL = BASE_URL + '/posters/'
-const MOVIES_PER_PAGE = 12
+
+//常數、變數們
+const MOVIES_PER_PAGE = 12  //每一個分頁顯示幾個電影
+let model = 'picture'  //目前清單排版樣式
+let patten = 'up'  //目前清單排列順序
+let page = 1 //目前瀏覽頁數
+
 
 //DOM節點
 const moviePanel = document.querySelector('#movie-panel')  //電影列表
 const paginator = document.querySelector('#paginator')  //分頁器
+const changeModel = document.querySelector('.change-model')  //改變排版模式
 
 //取出最愛電影清單的資料
 let movieData = JSON.parse(localStorage.getItem('favoriteMovies')) || []
 
 //一開始載入最愛的電影清單畫面
-renderMovieList(getMoviesByPage(1))
+renderMovieList(getMoviesByPage(1, patten), model)
 renderPaginator(movieData.length)
 
 //DOM事件 (看詳細電影資訊、刪除最愛電影清單)
@@ -28,18 +35,25 @@ moviePanel.addEventListener('click', function onPanelClicked(event){
 //DOM事件(按頁數決定載入那些影片)
 paginator.addEventListener('click', function onPaginatorClicked (event){
   if (event.target.tagName !== 'A') return  //如果沒有按到分頁，結束函式
-  const page = Number(event.target.dataset.page)
-  renderMovieList(getMoviesByPage(page))
+  page = Number(event.target.dataset.page)
+  renderMovieList(getMoviesByPage(page, patten), model)
 })
 
+//DOM事件 (改變排版模式)
+changeModel.addEventListener('click', function changeModel(event){
+  if (event.target.tagName !== 'I') return
+  model = event.target.dataset.model || model
+  patten = event.target.dataset.patten  || patten
+  renderMovieList(getMoviesByPage(page, patten), model) 
+})
 
-
-//建立電影清單畫面函式
-function renderMovieList(data) { 
-    let moviesList = ''
+//建立電影清單畫面函式(網頁整體版面)
+function renderMovieList(data, model) { 
+  let moviesList = ''
+  if (model === 'picture') {
     data.forEach(item => {
       moviesList += `
-      <div class="col-sm-3">
+      <div class="col-sm-6 col-md-4 col-lg-3">
         <div class="mb-2">
           <div class="card">
               <img
@@ -57,8 +71,24 @@ function renderMovieList(data) {
           </div>
         </div>
       </div>`
-    }) 
-    moviePanel.innerHTML = moviesList
+    })
+  } else if (model === 'list') {
+    data.forEach(item => {
+      moviesList += `
+      <hr/>
+      <div class="container d-flex justify-content-between m-2">
+        <div class="body">
+          <h5 class="card-title">${item.title}</h5>
+        </div>
+        <div class="footer">
+          <button class="btn btn-primary btn-show-movie" data-toggle="modal" data-target="#movie-modal" data-id=${item.id}>More</button>
+          <button class="btn btn-danger btn-add-delete" data-id=${item.id}>X</button>
+        </div>
+      </div>
+      `
+    })
+  }  
+  moviePanel.innerHTML = moviesList
 }
 
 //建立電影Modal函式
@@ -82,12 +112,15 @@ function showMovieModal(ID) {
 //刪除最愛電影
 function deleteFavorite (ID) {
     let id =Number(ID)
-    let list = JSON.parse(localStorage.getItem('favoriteMovies'))
-    const index = list.findIndex(item => item.id === id) 
+    const index = movieData.findIndex(item => item.id === id) 
     if(index === -1) return  //如果沒有找到該電影，則離開函式不往下執行
-    list.splice(index, 1)
-    localStorage.setItem('favoriteMovies',JSON.stringify(list))
-    renderMovieList()
+    movieData.splice(index, 1)
+    localStorage.setItem('favoriteMovies',JSON.stringify(movieData))
+    renderPaginator(movieData.length)
+    if ((page - 1) * MOVIES_PER_PAGE >= movieData.length) {
+      page --
+    }
+    renderMovieList(getMoviesByPage(page, patten), model)
 }
 
 //建立分頁器
@@ -101,7 +134,13 @@ function renderPaginator (amount) {
 }
 
 //載入不同分頁電影清單
-function getMoviesByPage (page) {
+function getMoviesByPage (page, patten) {
   const startIndex = (page - 1) * MOVIES_PER_PAGE
-  return movieData.slice(startIndex, startIndex+MOVIES_PER_PAGE)
+  let data = movieData
+  if (patten === 'up') {
+    data = data.sort((a, b)=> a.title > b.title ? 1: -1)
+  } else if (patten === 'down') {   
+    data = data.sort((a, b) => b.title > a.title ? 1: -1)
+  }
+  return data.slice(startIndex, startIndex+MOVIES_PER_PAGE)
 }
