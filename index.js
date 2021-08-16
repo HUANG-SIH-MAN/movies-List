@@ -25,7 +25,7 @@ axios
 .then((response) => {
     movies.push(...response.data.results)
     renderMovieList(getMoviesByPage(page, patten), model)
-    renderPaginator(movies.length)
+    renderPaginator()
 })
 .catch((err) => console.log(err))
 
@@ -67,10 +67,12 @@ moviePanel.addEventListener('click', function onPanelClicked(event){
 
 //DOM事件 (改變排版模式)
 changeModel.addEventListener('click', function changeModel(event){
-  if (event.target.tagName !== 'I') return
-  model = event.target.dataset.model || model
-  patten = event.target.dataset.patten  || patten
+  const target = event.target
+  if (target.tagName !== 'I') return
+  model = target.dataset.model || model
+  patten = target.dataset.patten  || patten
   renderMovieList(getMoviesByPage(page, patten), model) 
+  renderPaginator()
 })
 
 //DOM建立搜尋結果(一旦文字輸入，即時顯示搜尋結果)
@@ -78,7 +80,6 @@ searchInput.addEventListener('input', function onSearchFormSubmitted(event) {
   const keyWords = searchInput.value.trim().toLowerCase()  //取得輸入的關鍵字，並去除空白和轉為小寫
   filteredMovies.splice(0, filteredMovies.length)
   if (keyWords.length > 0) {
-    console.log(filteredMovies)
     for (const movie of movies) {
       if (movie.title.trim().toLowerCase().includes(keyWords)) {
         filteredMovies.push(movie)
@@ -86,17 +87,11 @@ searchInput.addEventListener('input', function onSearchFormSubmitted(event) {
     }
   }
   if (filteredMovies.length > 0) {
-    renderMovieList(getMoviesByPage(1, patten), model)
-    renderPaginator(filteredMovies.length) 
+    page = 1
+    renderMovieList(getMoviesByPage(page, patten), model)
+    renderPaginator() 
   } else {
-    moviePanel.innerHTML = `
-      <div class="jumbotron container-fluid">
-        <div class="container">
-          <div><h1 class="display-4 mb-3">搜尋不到電影</h1><div>
-          <div><p class="lead">請嘗試輸入其他關鍵字!!</p></div>
-        </div>
-      </div>
-    `
+    renderFail() //顯示搜尋失敗畫面
   }
    
 })
@@ -111,7 +106,7 @@ searchMovie.addEventListener('submit', function onSearchFormSubmitted(event) {
       if (movie.title.trim().toLowerCase().includes(keyWords)) {
         filteredMovies.push(movie)
         renderMovieList(getMoviesByPage(1, patten), model)
-        renderPaginator(filteredMovies.length)  
+        renderPaginator()  
       }
     }
   }
@@ -122,6 +117,7 @@ searchMovie.addEventListener('submit', function onSearchFormSubmitted(event) {
       timer: 2000,
       showConfirmButton: false
     });
+    renderFail() //顯示搜尋失敗畫面
   }
 })
 
@@ -232,7 +228,14 @@ function removeFromFavorite (ID) {
 }
 
 //建立分頁器
-function renderPaginator (amount) {
+function renderPaginator (state) {
+  //沒有資料，不顯示分頁器
+  if (state === 'none') {
+    paginator.innerHTML = ''
+    return
+  }
+
+  let amount = filteredMovies.length ? filteredMovies.length : movies.length
   const page = Math.ceil(amount / MOVIES_PER_PAGE)
   let paginatorHTML = ''
   for (let p = 1 ; p <= page ; p++) {
@@ -252,4 +255,23 @@ function getMoviesByPage (page, patten) {
   } 
   const startIndex = (page - 1) * MOVIES_PER_PAGE
   return data.slice(startIndex, startIndex+MOVIES_PER_PAGE)
+}
+
+//顯示搜尋失敗畫面
+function renderFail () {
+  moviePanel.innerHTML = `
+      <div class="jumbotron container-fluid">
+        <div class="container mb-2">
+          <div><h1 class="display-4 mb-3">搜尋不到電影</h1><div>
+          <div><p class="lead">請嘗試輸入其他關鍵字!!</p></div>
+        </div>
+        <hr/>
+        <div class="container d-flex justify-content-start mt-2">
+          <a href="index.html"><button type="button" class="btn btn-primary mr-3">Home</button></a>
+          <p class="lead">返回電影列表</p>
+        </div>
+        
+      </div>
+    `
+    renderPaginator('none')
 }
